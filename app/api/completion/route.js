@@ -20,21 +20,59 @@ export async function POST(request) {
     }
 
     // Vérifier le cache
-    if (cache.has(prompt)) {
-      return NextResponse.json({ response: cache.get(prompt) });
-    }
+    // if (cache.has(prompt)) {
+    //   return NextResponse.json({ response: cache.get(prompt) });
+    // }
 
-    const completion = await openai.chat.completions.create({
-      // model: "openai/gpt-4-32k", // Mythomax
-      model: "meta-llama/llama-3.3-8b-instruct:free", // Meta: Llama 3.3 8B Instruct (free)
-    //   model: "mistralai/devstral-small:free", // Mistral: Devstral Small (free)
+    // Si ce n'est pas des réponses progressives
+    // const completion = await openai.chat.completions.create({
+    //   // model: "openai/gpt-4-32k", // Mythomax
+    //   model: "meta-llama/llama-3.3-8b-instruct:free", // Meta: Llama 3.3 8B Instruct (free)
+    //   //   model: "mistralai/devstral-small:free", // Mistral: Devstral Small (free)
+    //   messages: [{ role: "user", content: prompt }],
+    //   max_tokens: 50,
+    //   stream: false,
+    // });
+
+    // return NextResponse.json({
+    //   response: completion.choices[0].message.content,
+    // });
+
+    // afficher les réponses progressivement (avec le stream : true)
+    const stream = await openai.chat.completions.create({
+      model: "mistralai/devstral-small:free",
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 50,
-      stream: false,
+      max_tokens: 100,
+      stream: true,
     });
 
-    return NextResponse.json({
-      response: completion.choices[0].message.content,
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const text = chunk.choices[0]?.delta?.content || "";
+            if (text) {
+              controller.enqueue(
+                new TextEncoder().encode(
+                  `data: ${JSON.stringify({ text })}\n\n`
+                )
+              );
+            }
+          }
+          controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(readableStream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
     });
   } catch (error) {
     console.error("Erreur API OpenRouter:", {

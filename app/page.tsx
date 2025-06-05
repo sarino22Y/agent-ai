@@ -18,8 +18,41 @@ export default function Home() {
         body : JSON.stringify({ prompt })
       });
 
-      const data = await res.json();
-      setResponse(data.response);
+      if (!res.ok) {
+        throw new Error(`Erreur HTTP: ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) {
+        throw new Error("Flux de réponse non disponible.");
+      }
+
+      const decoder = new TextDecoder();
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) {
+          setLoading(false);
+          break;
+        }
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n\n");
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.replace(/^data: /, "");
+            if (data === "[DONE]") {
+              break;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              setResponse((prev) => prev + (parsed.text || ""));
+            } catch (error) {
+              console.log("Erreur de parsing : ", error);
+              
+            }
+          }
+        }
+      }
     } catch (error) {
       setResponse("Erreur lors de la récupération de la réponse.");
       console.log("Erreur : ", error);
@@ -46,7 +79,7 @@ export default function Home() {
       {response && (
         <div style={{ marginTop: "20px" }}>
           <h2>Réponse :</h2>
-          <p>{response}</p>
+          <p>{response}</p> <br />
         </div>
       )}
     </div>
