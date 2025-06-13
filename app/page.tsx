@@ -1,21 +1,35 @@
-"use client"
+"use client";
 
-import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect, useState } from "react";
 
+interface Message {
+  prompt: string;
+  response: string;
+  model: string;
+}
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
+  const [model, setModel] = useState("meta-llama/llama-3.3-8b-instruct:free");
+  const [history, setHistory] = useState<Message[]>([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!prompt.trim()) {
+      setResponse("Veuillez entrer un prompt valide.");
+      return;
+    }
+
     setLoading(true);
+    setResponse("");
 
     try {
       const res = await fetch("/api/completion", {
-        method : "POST",
-        headers : {"Content-Type" : "application/json"},
-        body : JSON.stringify({ prompt })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, model }),
       });
 
       if (!res.ok) {
@@ -27,10 +41,15 @@ export default function Home() {
         throw new Error("Flux de réponse non disponible.");
       }
 
+      let accumulatedResponse = "";
       const decoder = new TextDecoder();
       while (true) {
-        const {done, value} = await reader.read();
+        const { done, value } = await reader.read();
         if (done) {
+          setHistory((prev) => [
+            ...prev,
+            { prompt, response: accumulatedResponse, model },
+          ]);
           setLoading(false);
           break;
         }
@@ -45,10 +64,11 @@ export default function Home() {
             }
             try {
               const parsed = JSON.parse(data);
-              setResponse((prev) => prev + (parsed.text || ""));
+              accumulatedResponse += parsed.text || "";
+              setResponse(accumulatedResponse);
+              // await new Promise((resolve) => setTimeout(resolve, 50)); // Délai pour effet typewriter
             } catch (error) {
               console.log("Erreur de parsing : ", error);
-              
             }
           }
         }
@@ -56,15 +76,50 @@ export default function Home() {
     } catch (error) {
       setResponse("Erreur lors de la récupération de la réponse.");
       console.log("Erreur : ", error);
-      
-    } finally {
       setLoading(false);
     }
-  }
+  };
+
+  // Effet typewriter pour la réponse courante
+  useEffect(() => {
+    if (response && loading) {
+      let index = 0;
+      const fullResponse = response;
+      setResponse(""); // Réinitialiser pour l'effet typewriter
+      const timer = setInterval(() => {
+        setResponse((prev) => prev + fullResponse[index]);
+        index++;
+        if (index >= fullResponse.length) {
+          clearInterval(timer);
+        }
+      }, 30);
+      return () => clearInterval(timer);
+    }
+  }, [response, loading]);
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <h1>Application IA avec Next.js</h1>
+
+      {/* Sélection du modèle */}
+      <div style={{ padding: "20px"}}>
+        <label htmlFor="model">Choisir un modèle : </label>          
+        <Select value={model} onValueChange={setModel}>
+          <SelectTrigger>
+            <SelectValue placeholder="Choisir un modèle" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="meta-llama/llama-3.3-8b-instruct:free">
+              LLaMA 3.3 8B (Gratuit)
+            </SelectItem>
+            <SelectItem value="mistralai/devstral-small:free">
+              Devstral Small (Gratuit)
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Formulaire */}
       <form onSubmit={handleSubmit}>
         <textarea
           value={prompt}
@@ -76,10 +131,36 @@ export default function Home() {
           {loading ? "Chargement..." : "Envoyer"}
         </button>
       </form>
+
+      {/* Réponse courante */}
       {response && (
         <div style={{ marginTop: "20px" }}>
-          <h2>Réponse :</h2>
-          <p>{response}</p> <br />
+          <h2>Réponse ({model}) :</h2>
+          <p style={{ whiteSpace: "pre-wrap" }}>{response}</p>
+        </div>
+      )}
+
+      {/* Historique des conversations */}
+      {history.length > 0 && (
+        <div style={{ marginTop: "20px" }}>
+          <h2>Historique des conversations :</h2>
+          {history.map((msg, index) => (
+            <div
+              key={index}
+              style={{
+                border: "1px solid #ccc",
+                padding: "10px",
+                marginBottom: "10px",
+              }}
+            >
+              <p>
+                <strong>Prompt ({msg.model}) :</strong> {msg.prompt}
+              </p>
+              <p>
+                <strong>Réponse :</strong> {msg.response}
+              </p>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -10,11 +10,18 @@ const cache = new Map();
 
 export async function POST(request) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, model } = await request.json();
 
     if (!prompt || typeof prompt !== "string" || prompt.trim() === "") {
       return NextResponse.json(
         { error: "Prompt invalide ou vide." },
+        { status: 400 }
+      );
+    }
+
+    if (!model || typeof model !== "string") {
+      return NextResponse.json(
+        { error: "Modèle invalide." },
         { status: 400 }
       );
     }
@@ -40,7 +47,7 @@ export async function POST(request) {
 
     // afficher les réponses progressivement (avec le stream : true)
     const stream = await openai.chat.completions.create({
-      model: "mistralai/devstral-small:free",
+      model: model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 100,
       stream: true,
