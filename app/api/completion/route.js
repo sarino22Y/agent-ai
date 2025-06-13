@@ -6,8 +6,6 @@ const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
 });
 
-const cache = new Map();
-
 export async function POST(request) {
   try {
     const { prompt, model } = await request.json();

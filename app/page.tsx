@@ -1,6 +1,14 @@
 "use client";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 
 interface Message {
@@ -92,36 +100,39 @@ export default function Home() {
         if (index >= fullResponse.length) {
           clearInterval(timer);
         }
-      }, 30);
+      }, 50);
       return () => clearInterval(timer);
     }
   }, [response, loading]);
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-      <h1>Application IA avec Next.js</h1>
+      <h1 className="text-2xl">Application IA avec Next.js</h1>
 
       {/* Sélection du modèle */}
-      <div style={{ padding: "20px"}}>
-        <label htmlFor="model">Choisir un modèle : </label>          
-        <Select value={model} onValueChange={setModel}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choisir un modèle" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="meta-llama/llama-3.3-8b-instruct:free">
-              LLaMA 3.3 8B (Gratuit)
-            </SelectItem>
-            <SelectItem value="mistralai/devstral-small:free">
-              Devstral Small (Gratuit)
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Card className="my-8">
+        <CardContent>
+          <label htmlFor="model">Choisir un modèle : </label>
+          <Select value={model} onValueChange={setModel}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choisir un modèle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="meta-llama/llama-3.3-8b-instruct:free">
+                LLaMA 3.3 8B (Gratuit)
+              </SelectItem>
+              <SelectItem value="mistralai/devstral-small:free">
+                Devstral Small (Gratuit)
+              </SelectItem>
+              <SelectItem value="openai/gpt-4-32k">openai gpt-4-32k</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
       {/* Formulaire */}
       <form onSubmit={handleSubmit}>
-        <textarea
+        <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Entrez votre prompt ici..."
