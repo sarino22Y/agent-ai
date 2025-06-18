@@ -106,7 +106,7 @@ export default function Home() {
   }, [response, loading]);
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
+    <div className="w-full max-w-2xl mx-auto p-4">
       <h1 className="text-2xl">Application IA avec Next.js</h1>
 
       {/* Sélection du modèle */}
