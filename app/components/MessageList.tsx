@@ -13,14 +13,14 @@ export function MessageList({ messages }: MessageListProps) {
       {messages.map((msg, index) => (
         <div
           key={index}
-          className="mb-4 p-4 border border-gray-200 rounded bg-gray-50"
+          className=""
         >
           <p className="font-medium">
             Prompt ({msg.task} - {msg.model}):
           </p>
-          <p className="text-gray-700">{msg.prompt}</p>
+          <p className="chat-bubble">{msg.prompt}</p>
           <p className="font-medium mt-2">Réponse :</p>
-          <p className="text-gray-700 whitespace-pre-wrap">{msg.response}</p>
+          <p className="chat-bubble">{msg.response}</p>
         </div>
       ))}
     </div>

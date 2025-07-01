@@ -29,7 +29,7 @@ export function ChatInterface() {
       case "explain":
         return `Explique "${input}" en une phrase simple.`;
       case "translate":
-        return `Traduisez "${input}" en anglais.`;
+        return `Traduisez "${input}".`;
       case "code":
         return `Générez une fonction JavaScript pour : ${input}, avec des commentaires.`;
       case "summarize":
@@ -137,7 +137,9 @@ export function ChatInterface() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Application IA avec Next.js</h1>
+      <progress className="progress w-full text-amber-50"></progress>
+      <h1 className="text-2xl font-bold">Application IA avec Next.js</h1>
+      <div className="divider divider-primary"></div>
 
       {/* Sélection du cas d'usage */}
       <div className="mb-4 flex flex-wrap gap-2">
@@ -146,9 +148,7 @@ export function ChatInterface() {
             key={key}
             onClick={() => setTask(key as TaskType)}
             className={`px-4 py-2 rounded ${
-              task === key
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              task === key ? "btn btn-primary btn-dash" : "btn btn-dash"
             }`}
           >
             {label}
@@ -196,14 +196,21 @@ export function ChatInterface() {
       {/* Réponse courante */}
       <ErrorMessage message={error} />
       {response && (
+        // <div className="mt-6">
+        //   <h2 className="text-lg font-semibold mb-2">
+        //     Réponse ({TASKS[task].label} -{" "}
+        //     {MODELS.find((m) => m.value === model)?.label}) :
+        //   </h2>
+        //   <p className="p-4 border rounded whitespace-pre-wrap">
+        //     {response}
+        //   </p>
+        // </div>
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-2">
             Réponse ({TASKS[task].label} -{" "}
             {MODELS.find((m) => m.value === model)?.label}) :
           </h2>
-          <p className="p-4 border rounded whitespace-pre-wrap">
-            {response}
-          </p>
+          <p className="chat-bubble chat-bubble-secondary">{response}</p>
         </div>
       )}
 
